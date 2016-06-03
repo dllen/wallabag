@@ -20,7 +20,6 @@ php:
     - 5.5
     - 5.6
     - 7.0
-    - hhvm
 
 env:
     - DB=mysql
@@ -30,11 +29,19 @@ env:
 matrix:
     fast_finish: true
     include:
+        # driver for PostgreSQL currently unsupported by HHVM, requires 3rd party dependency
+        - php: hhvm
+          sudo: required
+          dist: trusty
+          group: edge
+          env: DB=mysql
+        - php: hhvm
+          sudo: required
+          dist: trusty
+          group: edge
+          env: DB=sqlite
         - php: 7.0
           env: CS_FIXER=run VALIDATE_TRANSLATION_FILE=run DB=sqlite
-    exclude:
-        - php: hhvm
-          env: DB=pgsql  # driver for PostgreSQL currently unsupported by HHVM, requires 3rd party dependency
     allow_failures:
         - php: hhvm
 
@@ -44,8 +51,9 @@ branches:
         - legacy
 
 before_script:
-    - if [[ $TRAVIS_PHP_VERSION != hhvm ]]; then echo "memory_limit=-1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini; fi;
-    - if [[ $TRAVIS_PHP_VERSION != hhvm ]]; then phpenv config-rm xdebug.ini; fi;
+    - PHP=$TRAVIS_PHP_VERSION
+    - if [[ ! $PHP = hhvm* ]]; then echo "memory_limit=-1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini; fi;
+    - if [[ ! $PHP = hhvm* ]]; then phpenv config-rm xdebug.ini; fi;
     - composer self-update --no-progress
     - if [[ "$DB" = "pgsql" ]]; then psql -c 'create database wallabag_test;' -U postgres; fi;
 
